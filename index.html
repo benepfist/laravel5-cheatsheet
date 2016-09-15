@@ -5,7 +5,7 @@
         <link rel="shortcut icon" href="assets/ico/favicon.png">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="author" content="@aufree">
-        <title>Laravel 5.1 LTS Cheat Sheet</title>
+        <title>Laravel 5.3 Cheat Sheet</title>
       	<meta name="description" content="A quick reference guide (cheat sheet) for Laravel 5.1 LTS, listing artisan, composer, routes and other useful bits of information.We intend to build this Cheat Sheet more assessable and user friendly, you can view it with modern desktop :computer: browser and mobile device :iphone: .">
       	<meta name="keywords" content="Laravel 5.1 Artisan,Laravel 5.1 Auth,Laravel 5.1 Blade,Laravel 5.1 Cache,Laravel 5.1 Composer,Laravel 5.1 Config,Laravel 5.1 Container,Laravel 5.1 Cookie,Laravel 5.1 DB,Laravel 5.1 Environment,Laravel 5.1 Event,Laravel 5.1 File,Laravel 5.1 Form,Laravel 5.1 HTML,Laravel 5.1 Helper,Laravel 5.1 Input,Laravel 5.1 Lang,Laravel 5.1 Log,Laravel 5.1 Mail,Laravel 5.1 Model,Laravel 5.1 Pagination,Laravel 5.1 Queue,Laravel 5.1 Redirect,Laravel 5.1 Request,Laravel 5.1 Response,Laravel 5.1 Route,Laravel 5.1 SSH,Laravel 5.1 Schema,Laravel 5.1 Security,Laravel 5.1 Session,Laravel 5.1 String,Laravel 5.1 URL,Laravel 5.1 UnitTest,Laravel 5.1 Validation,Laravel 5.1 View">
         <link rel="stylesheet" href="assets/css/normalize.css" />
@@ -47,7 +47,7 @@
               <div class="row full-width">
 
                   <div class="large-2 columns code-column sidebar">
-                    <h5 class="sidebar-title">Laravel 5.1 LTS Cheat Sheet</h5>
+                    <h5 class="sidebar-title">Laravel 5.3 Cheat Sheet</h5>
                     <hr class="horizonal-line">
                     <div class="show-for-medium">
                       <button class="warning hollow button check-all-button">Check All</button>
@@ -65,7 +65,7 @@
                         <a href="https://phphub.org" target="_blank">Laravel Forum</a>
                       </li>
                       <li>
-                        <a href="https://laravel.com/docs/5.1" target="_blank">Laravel 5.1 Docs</a>
+                        <a href="https://laravel.com/docs/5.3" target="_blank">Laravel 5.3 Docs</a>
                       </li>
 
                       <li>
@@ -278,6 +278,23 @@ php artisan vendor:publish [--force] [--provider[="..."]] [--tag[="..."]]
 php artisan tail [--path[="..."]] [--lines[="..."]] [connection]
               </pre>
               </section>
+<section class="cmd-description grid-item">
+              <h4><a name="tinker" href="#tinker">Tinker</a> <a href="http://psysh.org/#install" title="PsySH Documentation"><i class="icon-file-text"></i></a></h4>
+              <pre class="prettyprint lang-php">
+// Read documentation in context
+doc $user;
+// Inspect your class
+ls -al User::class;
+// Easily show the source code for any object, class
+show App\Models\User;
+// Get the last Exception;
+wtf
+// Show, search, save and reply your shell history
+history
+              </pre>
+
+              </section>
+
 <section class="cmd-description grid-item">
               <h4><a name="composer" href="#composer">Composer</a> <a href="http://getcomposer.org/doc/03-cli.md" title="Composer CLI Docs"><i class="icon-file-text"></i></a></h4>
               <pre class="prettyprint lang-php">
@@ -519,8 +536,8 @@ DB::table('name')->first();
 $name = DB::table('users')->where('name', 'John')->pluck('name');
 DB::table('name')->pluck('column');
 // Retrieving A List Of Column Values
-$roles = DB::table('roles')->lists('title');
-$roles = DB::table('roles')->lists('title', 'name');
+$roles = DB::table('roles')->pluck('title');
+$roles = DB::table('roles')->pluck('title', 'name');
 // Specifying A Select Clause
 $users = DB::table('users')->select('name', 'email')->get();
 $users = DB::table('users')->distinct()->get();
@@ -553,6 +570,9 @@ $john = DB::table('users')
 $jane = DB::table('users')
               ->whereNameOrAge('Jane', 22)
               ->first();
+// JSON Where Clauses
+$users = DB::table('users')
+              ->where('meta->favorite_color', 'blue');
 // Order By, Group By, And Having
 $users = DB::table('users')
               ->orderBy('name', 'desc')
@@ -644,6 +664,10 @@ DB::table('users')->increment('votes', 5);
 DB::table('users')->decrement('votes');
 DB::table('users')->decrement('votes', 5);
 DB::table('users')->increment('votes', 1, ['name' => 'John']);
+// Update JSON
+DB::table('users')
+          ->where('id', 1)
+          ->update(['meta->wants_newsletter' => false]);
 // Deletes
 DB::table('users')->where('votes', '<', 100)->delete();
 DB::table('users')->delete();
@@ -674,8 +698,8 @@ class User extends Model {
 
           <h6>More</h6>
           <pre class="prettyprint lang-php">Model::create(array('key' => 'value'));
-// Find first matching record by attributes or create
-Model::firstOrCreate(array('key' => 'value'));
+// Find first matching record by attributes or create with attributes
+Model::firstOrCreate(array('key' => 'value'), array('key' => 'value', 'key2' => 'value2'));
 // Find first record by attributes or instantiate
 Model::firstOrNew(array('key' => 'value'));
 // Create or update a record matching attibutes, and fill with values
@@ -826,6 +850,9 @@ $user->roles()->sync([1, 2, 3]);
 // You may also pass additional intermediate table values with the IDs:
 $user->roles()->sync([1 => ['expires' => true], 2, 3]);
 
+// Toggle Pivot Table
+$user->roles()->toggle(1, 2, 3);
+$user->roles()->toggle(Roles::first());
               </pre>
 
               <h6>Events</h6>
@@ -853,13 +880,55 @@ Eloquent::reguard();
               <pre class="prettyprint lang-php">
 // Auto-Magic Pagination
 Model::paginate(15);
+DB::table('users')->paginate(15);
 Model::where('cars', 2)->paginate(15);
 // "Next" and "Previous" only
 Model::where('cars', 2)->simplePaginate(15);
+DB::table('users')->simplePaginate(15);
 // Manual Paginator
 Paginator::make($items, $totalItems, $perPage);
 // Print page navigators in view
 $variable->links();
+$variable->appends(['sort' => 'votes'])->links();
+$variable->fragment('tab3')->links();
+// Modify Paginator
+$users = Model::paginate(15);
+$users->setPath('custom/url');
+
+// Helper Methods
+$results->count()
+$results->currentPage()
+$results->firstItem()
+$results->hasMorePages()
+$results->lastItem()
+$results->lastPage() (Not available when using simplePaginate)
+$results->nextPageUrl()
+$results->perPage()
+$results->previousPageUrl()
+$results->total() (Not available when using simplePaginate)
+$results->url($page)
+
+// Paginate JSON
+Model::paginate();
+
+{
+   "total": 50,
+   "per_page": 15,
+   "current_page": 1,
+   "last_page": 4,
+   "next_page_url": "http://laravel.app?page=2",
+   "prev_page_url": null,
+   "from": 1,
+   "to": 15,
+   "data":[
+        {
+            // Result Object
+        },
+        {
+            // Result Object
+        }
+   ]
+}
               </pre>
               </section>
 
@@ -926,6 +995,22 @@ File::copyDirectory('directory', 'destination', $options = null);
 File::deleteDirectory('directory', $preserve = false);
 // Empty the specified directory of all files and folders
 File::cleanDirectory('directory');
+
+// Uploaded Files
+$profilePic = $request->file('photo');
+$profilePic = $request->photo;
+// Check if file was uploaded
+$request->hasFile('photo');
+$request->file('photo')->isValid();
+// File Path % Extension
+$request->photo->path();
+$request->photo->extension();
+// Storing Uploaded Files
+$request->photo->store('images');
+// Specify Disk
+$request->photo->store('images', 's3');
+// Define filename
+$request->photo->storeAs('iamges', 'userprofile.jpg', 's3');
               </pre>
               </section>
 
@@ -956,6 +1041,14 @@ $this->assertSessionHasErrors('name');
 // Asserting the session has errors for several keys...
 $this->assertSessionHasErrors(array('name', 'age'));
 $this->assertHasOldInput();
+// Asserting Event was fired
+$this->expectsEvents(UserRegistered::class);
+$this->doesntExpectEvents(OrderFailedToShip::class);
+$this->withoutEvents();
+// Asserting Job was started
+$this->expectsJobs(ShipOrder::class);
+$this->doesntExpectJobs(ShipOrder::class);
+$this->withoutJobs();
               </pre>
               <h6>Calling routes</h6>
               <pre class="prettyprint lang-php">
@@ -966,9 +1059,72 @@ $this->flushSession();
 $this->seed();
 $this->seed($connection);
               </pre>
+              <h6>Faker</h6>
+              <pre class="prettyprint lang-php">
+Event::fake();
+// Perform order shipping...
+Event::assertFired(OrderShipped::class, function ($e) use ($order) {
+    return $e->order->id === $order->id;
+});
+Event::assertNotFired(OrderFailedToShip::class);
 
+Mail::fake();
+
+// Perform order shipping...
+
+Mail::assertSent(OrderShipped::class, function ($mail) use ($order) {
+    return $mail->order->id === $order->id;
+});
+
+// Assert a message was sent to the given users...
+Mail::assertSentTo([$user], OrderShipped::class);
+
+// Assert a mailable was not sent...
+Mail::assertNotSent(AnotherMailable::class);
+
+Queue::fake();
+
+// Perform order shipping...
+
+Queue::assertPushed(ShipOrder::class, function ($job) use ($order) {
+    return $job->order->id === $order->id;
+});
+
+// Assert a job was pushed to a given queue...
+Queue::assertPushedOn('queue-name', ShipOrder::class);
+
+// Assert a job was not pushed...
+Queue::assertNotPushed(AnotherJob::class);
+
+Notification::fake();
+
+// Perform order shipping...
+
+Notification::assertSentTo(
+    $user,
+    OrderShipped::class,
+    function ($notification, $channels) use ($order) {
+        return $notification->order->id === $order->id;
+    }
+);
+
+// Assert a notification was sent to the given users...
+Notification::assertSentTo(
+    [$user], OrderShipped::class
+);
+
+// Assert a notification was not sent...
+Notification::assertNotSentTo(
+    [$user], AnotherNotification::class
+);
+
+// Mocking Facades
+Cache::shouldReceive('get')
+            ->once()
+            ->with('key')
+            ->andReturn('value');
+              </pre>
               </section>
-
 <section class="cmd-description grid-item">
               <h4><a name="SSH" href="#SSH">SSH</a> <a href="http://laravel.com/docs/ssh" title="SSH @ Laravel Docs"><i class="icon-file-text"></i></a>
               </h4>
@@ -1097,6 +1253,7 @@ $table->timestamps();
 $table->nullableTimestamps();
 
 // Others
+$table->json('meta');
 $table->binary('data');
 $table->boolean('confirmed');
 // Adds deleted_at column for soft deletes
@@ -1529,6 +1686,11 @@ Validator::resolver(function($translator, $data, $rules, $msgs)
 {
 return new FooValidator($translator, $data, $rules, $msgs);
 });
+// throw a ValidationException
+Validator::validate(
+array('key' => 'Foo'),
+array('key' => 'required|in:Foo')
+);
               </pre>
 
               <h6>Rules</h6>
@@ -1615,9 +1777,10 @@ View::creator('viewname', function($view){});
 @parent
 
 @include('view.name')
-@include('view.name', array('key' => 'value'));
+@include('view.name', array('key' => 'value'))
+@each('item.row', $items, 'item')
 @lang('messages.name')
-@choice('messages.name', 1);
+@choice('messages.name', 1)
 
 @if
 @else
@@ -1640,6 +1803,34 @@ View::creator('viewname', function($view){});
 @forelse($users as $user)
 @empty
 @endforelse
+
+// 5.3 feature
+@if($loop->first)
+@endif
+@if($loop->last)
+@endif
+
+// If first iteration through loop
+$loop->first
+// Index of the current loop iteration
+$loop->index
+// Remaining Iteration
+$loop->remaining
+// The total number of iterations
+$loop->count
+// If last iteration through the loop
+$loop->last
+// The nested loop level
+$loop->depth
+// Parents loop variable
+$loop->parent
+
+
+@continue
+@continue($user->number == 5)
+@break
+@break($user->number == 5)
+
 
 // Echo content
 {{ $var }}
@@ -1938,12 +2129,17 @@ return response('Hello World', 200, $headers);
 $value = session('key');
 $value = session()->get('key');
 session()->put('key', $value);
+// Used to get / set cache values
+$value = cache('key');
+cache('key', $value);
 // Will simply return the value it is given.
 value(function(){ return 'bar'; });
 // Retrieves a view instance
 return view('auth.login');
 // Returns the value it is given
 $value = with(new Foo)->work();
+// throw a ValidationException
+validator($data, $rules)->validate();
               </pre>
             </section>
             <section class="cmd-description grid-item">
@@ -2084,10 +2280,22 @@ $unique = $collection->unique();
 $values = $collection->values();
 // Filters the collection by a given key / value pair:
 $filtered = $collection->where('price', 100);
+// Filters the collection with operators
+// = == === <= >= < > <> != !==
+$collection->where('score', '===', 3);
 // Merges together the values of the given array with the values of the collection:
 $zipped = $collection->zip([100, 200]);
                 </pre>
               </section>
+<section class="cmd-description grid-item">
+              <h4><a name="generators" href="#generators">Generators Extended</a> <a href="https://github.com/laracasts/Laravel-5-Generators-Extended" title="Generators Extended Docs"><i class="icon-file-text"></i></a></h4>
+              <pre class="prettyprint lang-php">
+php artisan make:migration:schema table --schema="username:string, email:string:unique"
+php artisan make:migration:pivot User Group
+              </pre>
+
+              </section>
+
             </div>
           </div>
          </div>
@@ -2100,15 +2308,5 @@ $zipped = $collection->zip([100, 200]);
       <script src="assets/js/foundation.min.js"></script>
       <script src="assets/js/masonry.js"></script>
       <script src="assets/js/app.js"></script>
-
-      <script>
-        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-        ga('create', 'UA-70965318-4', 'auto');
-        ga('send', 'pageview');
-      </script>
   </body>
 </html>
